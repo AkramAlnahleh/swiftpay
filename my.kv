@@ -1,0 +1,1303 @@
+WindowManager:
+    Login:
+    Registration:
+    AppScreen:
+    CartScreen:
+    More_Option:
+    ProductScreen:
+    ProductDetailsScreen:
+    ShippingScreen:
+    PaymentScreen:
+    OrderSummaryScreen:
+    ReceiptsScreen:
+    WishlistScreen:
+    OrdersScreen:
+    OrderDetailScreen:
+    SavedCardsScreen:
+    AddCardScreen:
+    
+<Login>:
+    name: "login"
+    Image:
+        source: "4.jpeg"
+        size_hint: (None, None)
+        width: dp(360)
+        height: dp(640)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    MDTextField:
+        id: user
+        hint_text: "Username"
+        icon_right: "account"
+        font_size: "20dp"
+        size_hint_x: 0.85
+        pos_hint: {'center_x': 0.5, 'center_y': 0.65}
+        on_text:
+            self.text = self.text.replace(" ", "")
+        write_tab: False
+    MDTextField:
+        id: passw
+        hint_text: "Password"
+        password: True            
+        icon_right: "eye-off"
+        font_size: "20dp"
+        size_hint_x: 0.85
+        pos_hint: {'center_x': 0.5, 'center_y': 0.58}
+        on_text:
+            self.text = self.text.replace(" ", "")
+        write_tab: False
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: (0.85, None)
+        height: dp(30)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.52}
+        spacing: "5dp"
+        MDCheckbox:
+            id: show_password
+            size_hint: (None, None)
+            width: dp(30)
+            height: dp(30)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_press:
+                passw.password = False if passw.password else True
+                passw.icon_right = "eye" if passw.icon_right == "eye-off" else "eye-off"
+        MDLabel:
+            text: "[ref=show password]Show Password[/ref]"
+            markup: True
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_ref_press:
+                show_password.active = False if show_password.active else True
+                passw.password = False if passw.password else True
+                passw.icon_right = "eye" if passw.icon_right == "eye-off" else "eye-off"
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: (0.85, None)
+        height: dp(30)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.45}
+        spacing: "5dp"
+        MDCheckbox:
+            id: remember_me
+            size_hint: (None, None)
+            width: dp(30)
+            height: dp(30)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        MDLabel:
+            text: "Remember Me"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    BoxLayout:
+        size_hint: (0.85, None)
+        height: dp(50)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.35}
+        spacing: "20dp"
+        MDFlatButton:
+            text: "Login"
+            font_size: "22dp"
+            size_hint_x: 1
+            md_bg_color: "#FF5623"
+            on_release:
+                root.login_attempt(user.text, passw.text, remember_me.active)
+        MDFlatButton:
+            text: "SignUp"
+            font_size: "22dp"
+            size_hint_x: 1
+            md_bg_color: "#FF5623"
+            on_release:
+                root.manager.current = "registration"
+                user.text = ""
+                passw.text = ""
+
+<Registration>:
+    name: "registration"
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: dp(20)
+        spacing: dp(10)
+
+        MDTextField:
+            id: f_name
+            hint_text: "First Name"
+            font_size: sp(18)
+            on_text:
+                self.text = self.text.replace(" ", "")
+            write_tab: False
+
+        MDLabel:
+            id: f_name_error
+            text: ""
+            font_size: sp(12)
+            theme_text_color: "Error"
+            size_hint_y: None
+            height: self.texture_size[1]
+        
+        MDTextField:
+            id: l_name
+            hint_text: "Last Name"
+            font_size: sp(18)
+            on_text:
+                self.text = self.text.replace(" ", "")
+            write_tab: False
+        MDLabel:
+            id: l_name_error
+            text: ""
+            font_size: sp(12)
+            theme_text_color: "Error"
+            size_hint_y: None
+            height: self.texture_size[1]
+        
+        MDTextField:
+            id: email
+            hint_text: "Email"
+            font_size: sp(18)
+            on_text:
+                self.text = self.text.replace(" ", "")
+            write_tab: False
+        MDLabel:
+            id: email_error
+            text: ""
+            font_size: sp(12)
+            theme_text_color: "Error"
+            size_hint_y: None
+            height: self.texture_size[1]
+        
+        MDBoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(10)
+
+            MDTextField:
+                id: password
+                password: True
+                hint_text: "Password"
+                font_size: sp(18)
+                right_icon: "eye-off"
+                icon_right_color: app.theme_cls.primary_color  # Adjust icon color if needed
+                on_text:
+                    self.text = self.text.replace(" ", "")
+                write_tab: False
+
+            MDCheckbox:
+                id: show_password_checkbox
+                size_hint: None, None
+                size: dp(48), dp(48)
+                icon: "eye-off"
+                on_press:
+                    password.password = not self.active
+                    self.icon = "eye" if self.active else "eye-off"
+                    c_password.password = not self.active  # Apply the same visibility to confirm password
+                    c_password.right_icon = "eye" if self.active else "eye-off"
+                    password.focus = True  # Ensure focus remains on password field after toggling
+
+        MDLabel:
+            id: password_error
+            text: ""
+            font_size: sp(12)
+            theme_text_color: "Error"
+            size_hint_y: None
+            height: self.texture_size[1]
+               
+        MDTextField:
+            id: c_password
+            password: True
+            hint_text: "Confirm Password"
+            font_size: sp(18)
+            on_text:
+                self.text = self.text.replace(" ", "")
+            write_tab: False
+        
+        MDTextField:
+            id: b_date
+            hint_text: "Select your birth date"
+            font_size: sp(18)
+            on_focus: if self.focus: root.show_date_picker()
+            on_text:
+                self.text = self.text.replace(" ", "")
+            write_tab: False
+        MDLabel:
+            id: b_date_error
+            text: ""
+            font_size: sp(12)
+            theme_text_color: "Error"
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        BoxLayout:
+            spacing: dp(10)
+            MDRaisedButton:
+                text: "Register"
+                font_size: sp(18)
+                on_release: 
+                    root.register_attempt()
+            MDRaisedButton:
+                text: "Back to Login"
+                font_size: sp(18)
+                on_release: 
+                    root.manager.current = "login"
+
+<AppScreen>:
+    
+    name: "app_screen"
+    Image:
+        source: "back app.jpg"
+    
+    MDBoxLayout:
+        orientation: 'vertical'
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(56)
+            padding: dp(10)
+            MDTextField:
+                id: search_field
+                hint_text: "Search"
+                mode: "round"
+                icon_right: "magnify"
+                on_text: app.search_products(self.text)  # Calls search on each text input
+                line_color_focus: 0, 0.5, 0.5, 1  # Color when focused
+                line_color_normal: 0, 0.5, 0.5, 1  # Color when not focused
+                text_color: 1, 0, 0, 1  # Text color
+                icon_right_color: 0, 0.5, 0.5, 1  # Icon color
+        
+
+        ScrollView:
+            id: main_scroll
+            MDBoxLayout:
+                orientation: 'vertical'
+                adaptive_height: True
+                spacing: dp(10)
+                padding: dp(10)
+                
+                ScrollView:
+                    do_scroll_x: False
+                    do_scroll_y: False
+                    size_hint_y: None
+                    height: dp(300)
+
+                    Carousel:
+                        id: deals_carousel
+                        direction: 'right'
+                        loop: True
+                        size_hint_y: None
+                        height: dp(300)
+                        width: self.parent.width  # Make Carousel width same as parent
+
+                # Product Categories Section
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    adaptive_height: True
+                    spacing: dp(10)
+
+                    MDLabel:
+                        text: "Product Categories"
+                        font_style: "H6"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        theme_text_color: "Secondary"
+                    
+                    
+                    MDGridLayout:
+                        id: categories_grid
+                        cols: 4
+                        spacing: dp(10)
+                        size_hint_y: None
+                        adaptive_height: True
+
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Apparel & Accessories")
+                            MDLabel:
+                                text: "Apparel & Accessories"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Electronics & Appliances")
+                            MDLabel:
+                                text: "Electronics & Appliances"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Health & Beauty")
+                            MDLabel:
+                                text: "Health & Beauty"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Home & Living")
+                            MDLabel:
+                                text: "Home & Living"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Food & Beverages")
+                            MDLabel:
+                                text: "Food & Beverages"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Frozen Foods")
+                            MDLabel:
+                                text: "Frozen Foods"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Toys & Hobbies")
+                            MDLabel:
+                                text: "Toys & Hobbies"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Pet Supplies")
+                            MDLabel:
+                                text: "Pet Supplies"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Baby & Kids")
+                            MDLabel:
+                                text: "Baby & Kids"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Cleaning & Household")
+                            MDLabel:
+                                text: "Cleaning & Household"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Automotive & Tools")
+                            MDLabel:
+                                text: "Automotive & Tools"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+                        MDCard:
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            elevation: 10
+                            radius: [dp(5), dp(5), dp(5), dp(5)]
+                            on_release: app.on_card_click("Health & Personal Care")
+                            MDLabel:
+                                text: "Health & Personal Care"
+                                halign: "center"
+                                valign: "center"
+                                bold: True
+
+                # the Random Product Showcases Section here
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    padding: [10, 10, 13, 10]
+                    spacing: 10
+                    size_hint_y: None
+                    height: self.minimum_height
+
+                    MDLabel:
+                        text: "Random Product Showcases"
+                        font_style: "H5"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    ScrollView:
+                        id: random_product_scroll
+                        size_hint: (1, None)
+                        size_hint_y: None
+                        height: dp(450)  
+                        do_scroll_x: False
+                        do_scroll_y: True
+
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            spacing:5
+
+                            MDGridLayout:
+                                id: random_product_grid
+                                cols: 2
+                                spacing: 5
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                            MDLabel:
+                                text: "Shop by Brand"
+                                font_style: "H6"
+                                size_hint_y: None
+                                height: self.texture_size[1]
+                                theme_text_color: "Secondary"
+
+                            ScrollView:
+                                do_scroll_x: True
+                                do_scroll_y: False
+                                size_hint_y: None
+                                height: dp(150)
+
+                                MDBoxLayout:
+                                    orientation: 'horizontal'
+                                    adaptive_size: True
+                                    padding: [0, 0, 0, 0]
+                                    spacing: dp(10)
+
+                                    MDCard:
+                                        size_hint: None, None
+                                        size: dp(150), dp(150)
+                                        elevation: 10
+                                        radius: [dp(10), dp(10), dp(10), dp(10)]
+                                        on_release: app.on_card_click("Brand 1")
+                                        MDLabel:
+                                            text: "Brand 1"
+                                            halign: "center"
+                                            valign: "center"
+
+                                    MDCard:
+                                        size_hint: None, None
+                                        size: dp(150), dp(150)
+                                        elevation: 10
+                                        radius: [dp(10), dp(10), dp(10), dp(10)]
+                                        on_release: app.on_card_click("Brand 2")
+                                        MDLabel:
+                                            text: "Brand 2"
+                                            halign: "center"
+                                            valign: "center"
+
+        MDBoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(65)
+            padding: [dp(10), 10, dp(10), 10]
+            spacing: 0  
+            GridLayout:
+                cols: 4  
+                spacing: 30  
+
+                MDFloatingActionButton:
+                    icon: "home"
+                    md_bg_color: app.theme_cls.primary_color
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    elevation_normal: 8
+                    on_release: app.root.current = "app_screen"
+                    pos_hint: {'center_y': 0.5}
+
+                MDFloatingActionButton:
+                    icon: "barcode-scan"
+                    md_bg_color: app.theme_cls.primary_color
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    elevation_normal: 12
+                    pos_hint: {'center_y': 0.5}
+                    
+                MDFloatingActionButton:
+                    icon: "cart"
+                    md_bg_color: app.theme_cls.primary_color
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    on_release: app.root.current = "cart_screen"
+                    pos_hint: {'center_y': 0.5}
+
+                MDFloatingActionButton:
+                    icon: "dots-horizontal"
+                    md_bg_color: app.theme_cls.primary_color
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    on_release: app.root.current = "more"
+                    pos_hint: {'center_y': 0.5}
+
+<CartScreen>:
+    name: "cart_screen"
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: 'Cart'
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            elevation: 10
+            size_hint_y: None
+            height: dp(56)
+
+        ScrollView:
+            id: scroll_view
+            do_scroll_x: False
+            do_scroll_y: True
+
+            GridLayout:
+                id: cart_list
+                cols: 2
+                spacing: dp(8)
+                padding: [dp(8), dp(8), dp(8), dp(8)]
+                size_hint_y: None
+                height: self.minimum_height
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(50)
+            padding: dp(10)
+
+            MDLabel:
+                id: total_sum_label
+                text: 'Total: 0 JOD'
+                halign: 'center'
+                theme_text_color: 'Secondary'
+                font_style: 'H6'
+                size_hint_x: 0.8
+
+            MDRaisedButton:
+                text: 'Checkout'
+                size_hint_x: 0.2
+                icon: 'check-circle'  # Example icon
+                on_release: app.root.current = 'ShippingScreen'
+
+<More_Option>:
+    name: "more"
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "More Options"
+            pos_hint: {"top": 1}
+            elevation: 10
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            md_bg_color: app.theme_cls.primary_color
+            specific_text_color: app.theme_cls.accent_color
+
+        ScrollView:
+            MDList:
+                padding: "8dp"
+                spacing: "10dp"
+
+                OneLineIconListItem:
+                    text: "Profile"
+                    on_release:
+                        app.root.current = "profile"
+                    IconLeftWidget:
+                        icon: "account-circle"
+
+                OneLineIconListItem:
+                    text: "Location"
+                    on_release:
+                        root.open_mall_location()  # Directly opens the mall location
+                    IconLeftWidget:
+                        icon: "map-marker"
+
+                OneLineIconListItem:
+                    text: "Store Receipts"
+                    on_release:
+                        app.root.current = "receipts"  # Update this to the correct screen name
+                    IconLeftWidget:
+                        icon: "receipt"
+
+                OneLineIconListItem:
+                    text: "Wishlist"
+                    on_release:
+                        app.root.current = "wishlist"
+                    IconLeftWidget:
+                        icon: "heart"
+
+                OneLineIconListItem:
+                    text: "Orders"
+                    on_release:
+                        app.root.current = "orders_screen"
+                    IconLeftWidget:
+                        icon: "package"
+
+                OneLineIconListItem:
+                    text: "Saved Cards"
+                    on_release:
+                        app.root.current = "saved_cards"
+                    IconLeftWidget:
+                        icon: "wallet"
+
+                OneLineIconListItem:
+                    text: "Logout"
+                    on_release:
+                        app.logout()
+                    IconLeftWidget:
+                        icon: "logout"
+
+<SavedCardsScreen>:
+    name: 'saved_cards'
+    MDBoxLayout:
+        orientation: 'vertical'
+        spacing: 20
+
+        MDTopAppBar:
+            title: "Saved Cards"
+            left_action_items: [['arrow-left', lambda x: app.back_button()]]
+
+        ScrollView:
+            MDList:
+                id: cards_list
+
+        MDRaisedButton:
+            text: "Add New Card"
+            size_hint_y: None
+            height: dp(50)
+            on_release: app.root.current = "add_card"
+
+<AddCardScreen>:
+    name: 'add_card'
+    
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: dp(20)
+        spacing: dp(20)
+        
+        MDTextField:
+            id: card_name_input
+            hint_text: "Card Name"
+            
+        MDTextField:
+            id: card_number_input
+            hint_text: "Card Number"
+            input_filter: 'int'
+            
+        MDTextField:
+            id: expiry_date_input
+            hint_text: "Expiry Date (MM/YY)"
+            
+        MDTextField:
+            id: cvv_input
+            hint_text: "CVV"
+            input_filter: 'int'
+            
+        MDRaisedButton:
+            text: "Save Card"
+            on_release:
+                root.save_card(card_name_input.text,card_number_input.text,expiry_date_input.text,cvv_input.text)
+                
+        MDRaisedButton:
+            text: "Back to Saved Cards"
+            on_release: app.root.current = 'saved_cards'
+
+
+<WishlistScreen>:
+    name: "wishlist"
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "Wishlist"
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            elevation: 10
+
+        ScrollView:
+            GridLayout:
+                id: wishlist_grid
+                cols: 1  # Number of columns for the cards
+                padding: "10dp"
+                spacing: "10dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+
+
+<ReceiptsScreen>:
+    name: "receipts"
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "Store Receipts"
+            pos_hint: {"top": 1}
+            elevation: 10
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            md_bg_color: app.theme_cls.primary_color
+            specific_text_color: app.theme_cls.accent_color
+
+        ScrollView:
+            MDList:
+                id: receipts_list
+                padding: "16dp"
+                spacing: "10dp"
+
+
+<ProductScreen>:
+    name: "product_screen"
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            elevation: 10
+            padding: [dp(8), 0] 
+
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: dp(10)
+                size_hint_y: None
+                height: dp(56)  
+
+                MDIconButton:
+                    icon: "arrow-left"
+                    on_release: app.back_button()
+                    size_hint_x: None
+                    width: dp(56)
+                    pos_hint: {"center_y": 0.5}  
+
+                MDTextField:
+                    id: search_field
+                    hint_text: "Search"
+                    mode: "round"
+                    size_hint_x: 1
+                    size_hint_y: None
+                    height: dp(40)  
+                    padding_x: dp(10)
+                    pos_hint: {"center_y": 0.5} 
+                    on_text: app.root.get_screen('product_screen').filter_products(self.text)
+
+        ScrollView:
+            id: product_scroll
+            on_scroll_y: root.on_scroll()
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint_y: 1  
+
+            GridLayout:
+                id: product_grid
+                cols: 2
+                size_hint_y: None
+                padding: dp(8)
+                spacing: dp(8)
+                height: self.minimum_height
+
+
+<ProductDetailsScreen>:
+    name: "product_details_screen"
+
+    MDBoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "Product Details"
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            elevation: 12
+            size_hint_y: None
+            height: dp(56)
+            md_bg_color: [0.1, 0.1, 0.1, 1] # Dark background for top app bar
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint_y: 1
+
+            MDBoxLayout:
+                orientation: 'vertical'
+                padding: [dp(4), dp(6)]
+                spacing: dp(4) # Reduced spacing
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDCard:
+                    size_hint_y: None
+                    height: dp(300) # Reduced height
+                    elevation: 15
+                    orientation: 'vertical'
+                    radius: dp(16)
+
+                    FloatLayout:
+                        size_hint_y: None
+                        height: dp(180) # Reduced height
+
+                        FitImage:
+                            id: product_image
+                            source: root.product_image_url
+                            allow_stretch: True
+                            keep_ratio: True # Maintain aspect ratio
+                            size_hint: (1, 1)
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            radius: [dp(16), dp(16), 0, 0]
+
+                        MDLabel:
+                            id: product_offer_label
+                            text: f"% {root.product_offer:.2f}" if root.product_offer > 0 else ""
+                            theme_text_color: "Custom"
+                            text_color: [1, 1, 1, 1]
+                            bold: True
+                            font_size: '12sp'
+                            size_hint: None, None
+                            size: dp(50), dp(24)
+                            canvas.before:
+                                Color:
+                                    rgba: [1, 0, 0, 1]
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(12), dp(12), dp(12), dp(12)]
+                            pos_hint: {"right": 0.98, "top": 0.98}
+                            angle: 45
+                            opacity: 1 if root.product_offer > 0 else 0
+
+                    MDBoxLayout:
+                        padding: [dp(12), dp(8)] # Reduced padding
+                        orientation: 'vertical'
+                        spacing: dp(8) # Reduced spacing
+
+                        # Product name above the price and icon
+                        MDLabel:
+                            id: product_name_label
+                            text: root.product_name
+                            halign: 'center'
+                            theme_text_color: 'Primary'
+                            font_style: 'H6'
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            spacing: dp(6)
+                            size_hint_y: None
+                            height: dp(50)
+
+                            MDLabel:
+                                id: product_price_label
+                                #text: f"{root.product_price:.2f} JOD"
+                                halign: 'center'
+                                theme_text_color: 'Primary'
+                                font_style: 'H5'
+                                size_hint_y: None
+                                height: self.texture_size[1]
+                                markup: True
+
+                            MDLabel:
+                                id: product_discount_price_label
+                                #text: f"{root.discount_price:.2f} JOD" if root.product_offer > 0 else ""
+                                halign: 'center'
+                                theme_text_color: 'Error'
+                                font_style: 'H5'
+                                size_hint_y: None
+                                height: self.texture_size[1]
+                                markup: True
+
+                            MDIconButton:
+                                icon: "heart"
+                                icon_color: [1, 0, 0, 1]
+                                on_release: root.add_to_wishlist()  # Add product to wishlist
+                                size_hint_x: None
+                                size_hint_y: None
+                                padding: [dp(8), dp(4)] # Reduced padding
+                                width: dp(50) # Reduced width
+                                height: dp(50) # Reduced height
+                                pos_hint: {"center_x": 0.5}
+
+                # Description section below the card
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    padding: [dp(8), dp(6)]
+                    spacing: dp(4)
+                    size_hint_y: None
+                    height: self.minimum_height
+
+
+                    MDLabel:
+                        #text: "Product Description"
+                        font_style: "Subtitle1"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        color: [0, 0, 0, 0.87] # Dark color for readability
+
+                    MDLabel:
+                        id: product_description_label
+                        text: root.product_description
+                        font_style: "Body1"
+                        size_hint_y: None
+                        text_size: self.width, None
+                        halign: "left"
+                        valign: "top"
+                        height: self.texture_size[1]
+                        color: [1, 1, 1, 1] # Dark color for readability
+
+        MDRoundFlatButton:
+            text: "Add to Cart"
+            on_release: root.add_product_to_cart()
+            size_hint_x: 1 # Fill the entire width
+            size_hint_y: None
+            height: dp(60)
+            elevation: 2
+            color: [0, 0, 0, 0.87]
+            padding: [dp(16), dp(8)]
+            md_bg_color: [0.1, 0.5, 0.1, 1] # Modern button color
+            ripple_color: [0.2, 0.6, 0.2, 1] # Ripple effect color
+
+
+<ShippingScreen>:
+    name: "ShippingScreen"
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: [0, 0]  # Remove top padding to eliminate the gap
+        spacing: 10
+        width: self.parent.width  # Make the top app bar fill the entire width
+
+        MDTopAppBar:
+            title: "Shipping Information"  # Title updated to match screen purpose
+            pos_hint: {"top": 1}
+            elevation: 10
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            spacing: 10
+            padding: [0, 0, 0, 10]  # Optional bottom padding for button spacing
+
+            MDLabel:
+                text: 'Enter Shipping Information'
+                halign: "center"
+                font_size: 24
+                size_hint_y: None
+                height: 50
+
+            MDTextField:
+                id: address_line1
+                hint_text: 'Address Line 1'
+                mode: "rectangle"
+                font_style: 'Subtitle1'
+                halign: 'left'
+                size_hint_y: None
+                height: 50
+
+            MDTextField:
+                id: address_line2
+                hint_text: 'Address Line 2'
+                mode: "rectangle"
+                size_hint_y: None
+                height: 50
+
+            MDTextField:
+                id: phone_number
+                hint_text: 'Phone Number'
+                mode: "rectangle"
+                size_hint_y: None
+                height: 50
+                multiline: False
+
+            MDTextField:
+                id: province
+                hint_text: 'Select Province'
+                mode: "rectangle"
+                size_hint_y: None
+                height: 50
+                on_focus: root.open_province_menu(*args)
+
+            MDTextField:
+                id: city
+                hint_text: 'Select City'
+                mode: "rectangle"
+                size_hint_y: None
+                height: 50
+                on_focus: root.open_city_menu(*args)
+
+            MDTextField:
+                id: zip_code
+                hint_text: 'ZIP Code'
+                mode: "rectangle"
+                size_hint_y: None
+                height: 50
+
+            MDRaisedButton:
+                text: 'Continue to Payment'
+                size_hint_y: None
+                height: 50
+                pos_hint: {'center_x': 0.5}
+                on_release: root.on_submit()
+<PaymentScreen>:
+    name: "payment"
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(20)
+        spacing: dp(20)
+
+        MDLabel:
+            text: "Payment Information"
+            font_style: "H4"
+            halign: "center"
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            spacing: dp(10)
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDTextField:
+                id: card_number
+                hint_text: "Card Number"
+                icon_right: "credit-card"
+                mode: "rectangle"
+
+            MDTextField:
+                id: expiry_date
+                hint_text: "Expiry Date (MM/YY)"
+                icon_right: "calendar"
+                mode: "rectangle"
+
+            MDTextField:
+                id: cvv
+                hint_text: "CVV"
+                icon_right: "lock"
+                mode: "rectangle"
+                password: True
+
+            MDBoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(48)
+                spacing: dp(10)
+
+                MDCheckbox:
+                    id: save_card_checkbox
+                    active: False
+                    size_hint: None, None
+                    size: dp(48), dp(48)
+
+                MDLabel:
+                    text: "Save card information for future use"
+                    halign: "left"
+                    valign: "center"
+                    size_hint_y: None
+                    height: dp(48)
+                    text_size: self.width, None
+        MDBoxLayout:
+            orientation: 'horizontal'
+            spacing: dp(10)
+            size_hint_y: None
+            height: dp(48)
+
+            MDRaisedButton:
+                text: "Review and Confirm"
+                pos_hint: {"center_x": 0.5}
+                on_release: root.review_and_confirm_payment()
+
+            MDFlatButton:
+                text: "Cancel"
+                pos_hint: {"center_x": 0.5}
+                on_release: root.go_back_to_previous_screen()
+    
+        
+<OrderSummaryScreen>:
+    name: "order_summary_screen"
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "Order Summary"
+            elevation: 10
+
+        ScrollView:
+            MDList:
+                id: order_summary_list  # List to display items and prices
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(50)
+            padding: dp(10)
+            spacing: dp(10)
+
+            MDLabel:
+                text: "Total:"
+                size_hint_x: 0.2
+
+            MDLabel:
+                id: total_sum_label  # Label for the total sum
+                text: "0"
+                size_hint_x: 0.8
+
+        MDRaisedButton:
+            text: "Confirm Order"
+            size_hint: None, None
+            size: dp(200), dp(50)
+            pos_hint: {"center_x": 0.5}
+            on_release: root.confirm_order()  # Calls the confirm_order method
+<OrdersScreen>:
+    name: 'orders_screen'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            
+            title: "Your Orders"
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+        ScrollView:
+            MDList:
+                id: orders_list
+
+
+<OrderDetailScreen>:
+    name: 'order_detail_screen'
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "Order Details"
+            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            elevation: 10
+            md_bg_color: app.theme_cls.primary_color
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(16)
+                spacing: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(16)
+                    spacing: dp(8)
+                    size_hint_y: None
+                    height: self.minimum_height
+                    radius: [dp(12)]
+                    elevation: 5
+
+                    MDLabel:
+                        id: order_date
+                        text: "Order Date: "
+                        theme_text_color: "Primary"
+                        font_style: "Subtitle1"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    MDLabel:
+                        id: order_time
+                        text: "Order Time: "
+                        theme_text_color: "Primary"
+                        font_style: "Subtitle1"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    MDLabel:
+                        id: order_total
+                        text: "Total: "
+                        theme_text_color: "Secondary"
+                        font_style: "Subtitle2"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    MDLabel:
+                        id: order_status
+                        text: "Status: "
+                        theme_text_color: "Hint"
+                        font_style: "Subtitle2"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                MDLabel:
+                    text: "Order Items"
+                    theme_text_color: "Primary"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # Container for order items
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    id: order_items_container
+
+
+
+<CartItem>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(120)
+    padding: dp(10)
+
+    Image:
+        source: root.product_image
+        size_hint_x: 0.3
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+
+        Label:
+            text: root.product_name
+            font_size: '18sp'
+
+        Label:
+            text: f"${root.product_price:.2f}"
+            font_size: '16sp'
+            color: 0.6, 0.6, 0.6, 1
+
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: dp(10)
+
+            Button:
+                text: "-"
+                on_press: root.decrease_quantity()
+
+            Label:
+                text: str(root.quantity)
+                font_size: '16sp'
+                halign: 'center'
+
+            Button:
+                text: "+"
+                on_press: root.increase_quantity()
+
+            Button:
+                text: "Remove"
+                on_press: root.remove_product()
+
+<CartView>:
+    viewclass: 'CartItem'
+    RecycleBoxLayout:
+        orientation: 'vertical'
+        default_size: None, dp(130)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height

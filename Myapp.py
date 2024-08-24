@@ -7,30 +7,23 @@ from firebase_admin import credentials, auth
 from kivymd.app import MDApp
 from kivy.app import App
 from kivymd.uix.list import OneLineAvatarListItem, ImageLeftWidget
-import firebase_admin
-from firebase_admin import credentials, firestore
+from kivy.uix.image import Image as KivyImage
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivy.metrics import dp
+from firebase_admin import firestore
 from kivy.uix.popup import Popup
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
 from datetime import date
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 import os
-from datetime import datetime
 from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.floatlayout import FloatLayout
 import webbrowser
-
 from kivymd.uix.button import MDIconButton
 from kivy.uix.button import Button
-import os
-from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.button import Button
-from kivy.uix.label import Label
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -40,61 +33,24 @@ from kivymd.uix.pickers import MDDatePicker
 from kivy.storage.jsonstore import JsonStore
 from kivy.core.window import Window
 import datetime
-import os
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.popup import Popup
-from kivymd.uix.button import MDIconButton
-from kivy.uix.screenmanager import Screen
-from datetime import datetime
-
-from kivy.uix.screenmanager import Screen
-from kivy.uix.label import Label
-from kivymd.uix.card import MDCard
-from kivymd.uix.label import MDLabel
-from kivy.metrics import dp
 from google.cloud import firestore
-import os
-from kivy.properties import StringProperty ,NumericProperty
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.clock import mainthread
 from kivymd.uix.spinner import MDSpinner
-from kivy.uix.screenmanager import Screen
-from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.boxlayout import MDBoxLayout
 from threading import Thread
 from functools import partial
 from random import sample
 from kivymd.uix.button import MDFillRoundFlatIconButton
 from kivy.properties import ListProperty
 import threading
-from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
-from kivymd.uix.card import MDCard
-from kivy.uix.screenmanager import Screen
-from kivy.uix.boxlayout import BoxLayout
-from kivy.graphics import Color, Rectangle
-import os
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.popup import Popup
-from kivymd.uix.list import OneLineIconListItem
-
-from kivy.uix.screenmanager import Screen
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivymd.uix.label import MDLabel
-from kivymd.uix.button import MDIconButton 
 from kivymd.toast import toast
-from kivy.uix.boxlayout import BoxLayout
 
 wishlist_items = []
 
 
-cred_path = "mycart-93520-firebase-adminsdk-ws4ro-f943b7f8a5.json"
+cred_path = "mycart-93520-firebase-adminsdk-ws4ro-482a7d87c6.json"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cred_path
 cred = credentials.Certificate(cred_path)
 firebase_admin.initialize_app(cred)
@@ -355,7 +311,18 @@ class SavedCardsScreen(Screen):
         # Fetch all cards from the saved_cards collection
         for doc in user_ref.stream():
             card = doc.to_dict()
-            card_item = OneLineIconListItem(text=f"{card['name']} **** **** **** {card['number'][-4:]}")
+            card_name = card.get('name', '').strip()
+            card_number = card.get('number', '').strip()
+            
+            # Skip if card_name or card_number is missing or empty
+            if not card_name or not card_number:
+                continue
+
+            last4 = card_number[-4:] if len(card_number) >= 4 else '0000'  # Safely get the last 4 digits
+
+            card_item = OneLineIconListItem(
+                text=f"{card_name} **** **** **** {last4}"
+            )
             
             # Add an icon to the left of the list item
             icon = IconLeftWidget(icon="credit-card")
@@ -788,9 +755,9 @@ class ProductDetailsScreen(BaseScreen):
 
         # Set price label with discount if applicable
         self.ids.product_price_label.text = (
-            f"[color=#FFFFFF]{self.product_price:.2f} JOD[/color]   [color=#FF0000][s]{self.discount_price:.2f} JOD[/s][/color]"
+            f"[color=#FFFFFF]{self.product_price:.2f} [/color]   [color=#FF0000][s]{self.discount_price:.2f} JOD[/s][/color]"
             if self.product_offer > 0
-            else f"{self.product_price:.2f} JOD")
+            else f"{self.product_price:.2f} ")
     def add_product_to_cart(self, *args):
         product = {
             'product_id': self.product_id,
@@ -901,76 +868,119 @@ class PaymentScreen(Screen):
         super().__init__(**kwargs)
         self.card_info_saved = False
         self.card_info = {}
-        self.order_summary = {}  # To hold summary info
+        self.saved_cards = []
+        self.menu = None
 
     def on_enter(self):
-        self.load_card_info()
-        if self.card_info_saved:
-            self.prefill_card_info()
+        self.fetch_saved_cards()
+
+    def set_card_info(self, card):
+        """Initialize card information with the provided card data."""
+        print(f"Setting card info: {card}")
+        self.card_info = card
+        self.card_info_saved = True
+        self.prefill_card_info()
 
     def prefill_card_info(self):
-        """Pre-fill the card fields with saved information."""
-        self.ids.card_number.text = f"**** **** **** {self.card_info['card_number'][-4:]}"
-        self.ids.expiry_date.text = self.card_info['expiry_date']
-        self.ids.cvv.text = "***"
-        self.ids.save_card_checkbox.active = False
+        """Prefill the card information fields with the selected card's data."""
 
-    def save_card_info(self):
-        """Save card information if the checkbox is active."""
-        if self.ids.save_card_checkbox.active:
-            self.show_card_name_dialog()
+        def clean_text(text):
+            """Helper function to clean text by replacing line breaks and handling None."""
+            if text is not None:
+                return text.replace(u'\r\n', u'\n')
+            return ""
 
-    def show_card_name_dialog(self):
-        """Prompt the user to name their card."""
-        from kivymd.uix.dialog import MDDialog
-        from kivymd.uix.textfield import MDTextField
+        if 'card_number' in self.ids:
+            self.ids.card_number.text = clean_text(self.card_info.get("card_number"))
+        if 'expiry_date' in self.ids:
+            self.ids.expiry_date.text = clean_text(self.card_info.get("expiry_date"))
+        if 'cvv' in self.ids:
+            self.ids.cvv.text = clean_text(self.card_info.get("cvv"))
 
-        self.card_name_dialog = MDDialog(
-            title="Name Your Card",
-            type="custom",
-            content_cls=MDTextField(
-                hint_text="Card Name",
-                id="card_name_input",
-            ),
-            buttons=[
-                MDRaisedButton(
-                    text="SAVE",
-                    on_release=self.save_card_name
-                ),
-                MDFlatButton(
-                    text="CANCEL",
-                    on_release=lambda x: self.card_name_dialog.dismiss()
-                ),
-            ],
+
+
+    @mainthread
+    def setup_card_menu(self, saved_cards):
+
+        menu_items = []
+
+        for card in saved_cards:
+            card_name = card.get('card_name', 'Unknown Card')
+            last4 = card.get('last4', '0000')
+            menu_items.append({
+                "text": f"{card_name} ****{last4}",
+                "viewclass": "OneLineListItem",
+                "on_release": lambda x=card: self.on_card_selected(x)
+            })
+
+        # Add the "Add a New Card" option
+        menu_items.append({
+            "text": "Add a New Card",
+            "viewclass": "OneLineListItem",
+            "on_release": self.on_add_card_selected
+        })
+
+        self.menu = MDDropdownMenu(
+            caller=self.ids.card_selection_button,
+            items=menu_items,
+            width_mult=4,
         )
-        self.card_name_dialog.open()
 
-    def save_card_name(self, *args):
-        """Save the card name along with the card information."""
-        card_name = self.card_name_dialog.content_cls.text
-        self.card_info = {
-            "card_name": card_name,
-            "card_number": self.ids.card_number.text,
-            "expiry_date": self.ids.expiry_date.text,
-            "cvv": self.ids.cvv.text,
-        }
-        self.card_info_saved = True
-        self.card_name_dialog.dismiss()
-        # Save card info securely
-        print(f"Card information saved as '{card_name}' successfully!")
+    def on_card_selected(self, card):
+        """Handle card selection."""
+        self.set_card_info(card)
+        self.ids.card_selection_button.set_item(f"{card.get('card_name', 'Unknown Card')} ****{card.get('last4', '0000')}")
+        self.menu.dismiss()
 
-    def load_card_info(self):
-        """Load saved card information."""
-        # Placeholder for loading logic
-        saved_card_info = {
-            "card_name": "My Primary Card",
-            "card_number": "1234567812345678",
-            "expiry_date": "12/25",
-            "cvv": "123",
-        }
-        if saved_card_info:
-            self.card_info = saved_card_info
-            self.card_info_saved = True
+    def on_add_card_selected(self):
+        """Handle the selection to add a new card."""
+        self.add_new_card()
+        self.ids.card_selection_button.set_item("Add a New Card")
+        self.menu.dismiss()
+
+    def add_new_card(self):
+        """Handle adding a new card."""
+        self.ids.card_number.text = ""
+        self.ids.expiry_date.text = ""
+        self.ids.cvv.text = ""
+
+    def fetch_saved_cards(self):
+        """Fetch saved cards from Firestore."""
+        uid = self.manager.current_uid  # Assuming you store the current user's ID in the manager
+        db = firestore.Client()
+        doc_ref = db.collection("users").document(uid).collection("saved_cards")
+
+        documents = doc_ref.get()
+        self.on_cards_fetched(documents)
+
+    @mainthread
+    def on_cards_fetched(self, documents):
+        self.saved_cards = []
+        for doc in documents:
+            card = doc.to_dict()
+            card_number = card.get("number")
+            last4 = card_number[-4:] if card_number else "0000"  # Fallback to "0000" if card_number is None
+            self.saved_cards.append({
+                "card_name": card.get("name"),
+                "last4": last4,
+                "card_number": card_number,
+                "expiry_date": card.get("expiry"),
+                "cvv": card.get("cvv"),
+            })
+
+        self.setup_card_menu(self.saved_cards)
+
+    def review_and_confirm_payment(self):
+        """Review and confirm the payment."""
+        if not self.validate_payment_info():
+            toast("Invalid payment information.")
+            return
+        
+        payment_success = self.process_payment()
+        if payment_success:
+            self.show_order_summary()
+        else:
+            self.handle_payment_failure()
 
     def validate_payment_info(self):
         """Validate the payment information."""
@@ -981,33 +991,8 @@ class PaymentScreen(Screen):
 
     def process_payment(self):
         """Process the payment with the payment gateway."""
-        # Placeholder for payment processing logic
-        print("Processing payment...")
-        # Simulate a successful payment response
+        toast("Processing payment...")
         return True
-
-    def review_and_confirm_payment(self):
-        """Review and confirm the payment."""
-        if not self.validate_payment_info():
-            print("Invalid payment information.")
-            return
-        
-        self.order_summary = self.get_order_summary()
-        payment_success = self.process_payment()
-        if payment_success:
-            self.show_order_summary()
-        else:
-            self.handle_payment_failure()
-
-    def get_order_summary(self):
-        """Gather the order summary."""
-        # Example placeholders for products and delivery location
-        products = [
-            {"name": "Product 1", "quantity": 1, "price": 10.00},
-            {"name": "Product 2", "quantity": 2, "price": 20.00}
-        ]
-        delivery_location = "123 Main St, Anytown, USA"
-        return {"products": products, "delivery_location": delivery_location}
 
     def show_order_summary(self):
         """Display the order summary."""
@@ -1015,13 +1000,9 @@ class PaymentScreen(Screen):
 
     def handle_payment_failure(self):
         """Handle a failed payment."""
-        print("Payment failed.")
-        # Show an error message or retry options
+        toast("Payment failed.")
         self.manager.current = 'payment_failure_screen'
 
-    def go_back_to_previous_screen(self):
-        """Navigate back to the previous screen."""
-        self.manager.current = 'previous_screen'
 
 class OrdersScreen(BaseScreen):
     def on_pre_enter(self, *args):
@@ -1229,14 +1210,14 @@ class OrderSummaryScreen(BaseScreen):
             print(f"Error generating PDF: {e}")
             return None
 
-    def save_receipt_to_firestore(self, user_id, cart_items, total_sum):
+    def save_receipt_to_firestore(self, uid, cart_items, total_sum):
         try:
             receipt_data = {
                 'items': cart_items,
                 'total_sum': total_sum,
                 'timestamp': datetime.now()
             }
-            db.collection('users').document(user_id).collection('saved_receipts').add(receipt_data)
+            db.collection('users').document(uid).collection('saved_receipts').add(receipt_data)
             print("Receipt saved to Firestore.")
         except Exception as e:
             print(f"Error saving receipt to Firestore: {e}")
@@ -1408,7 +1389,8 @@ class WishlistScreen(Screen):
         product_details_screen.product_data = product_data
         
         # Switch to the ProductDetailsScreen
-        self.manager.current = "product_details_screen"
+        self.go_to_screen("product_details_screen")
+
 
 
 
@@ -1553,13 +1535,6 @@ class ReceiptsScreen(Screen):
         except Exception as e:
             print(f"Error deleting receipt: {e}")
 
-
-
-
-
-
-
-
 class CartItem(RecycleDataViewBehavior, BoxLayout):
     product_name = StringProperty()
     product_image = StringProperty()
@@ -1606,6 +1581,7 @@ class AppScreen(BaseScreen):
         self.total_products = 0
         self.loading_spinner = MDSpinner(size_hint=(None, None), size=(dp(20), dp(20)), active=True)
         self.product_data_list = []
+        self.carousel_initialized = False  # Flag to track carousel initialization
 
 
     def populate_deals_carousel(self):
@@ -1682,7 +1658,9 @@ class AppScreen(BaseScreen):
     
 
     def on_enter(self, *args):
-        self.populate_deals_carousel()
+        if not self.carousel_initialized:
+            self.populate_deals_carousel()
+            self.carousel_initialized = True
         if not self.has_updated_random_products:
             threading.Thread(target=self.update_random_products).start()
             self.has_updated_random_products = True
@@ -1699,7 +1677,7 @@ class AppScreen(BaseScreen):
         if not products:
             return
 
-        random_products = sample(products, min(25, len(products)))
+        random_products = sample(products, min(26, len(products)))
         Clock.schedule_once(lambda dt: self.display_products(random_products))
 
     def display_products(self, products):
@@ -1805,9 +1783,6 @@ class AppScreen(BaseScreen):
             product_card.add_widget(box)
 
             self.ids.random_product_grid.add_widget(product_card)
-
-
-
 
     def load_products(self):
         self.current_page = 0
@@ -1975,19 +1950,44 @@ class More_Option(Screen):
 
     def open_mall_location(self):
         # URL to the mall location on Google Maps
-        mall_location_url = "https://maps.app.goo.gl/1awLQZ1UTXbEK4NL7"
+        mall_location_url = "https://maps.app.goo.gl/RviP6i8M3pLJetC86"
         # Open the URL in the default web browser
         webbrowser.open(mall_location_url)
 
 class WindowManager(ScreenManager):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.history_stack = []
+
+    def add_to_history(self, screen_name):
+        if self.current not in self.history_stack:
+            self.history_stack.append(self.current)
+
+    def back_button(self):
+        if len(self.history_stack) > 0:
+            previous_screen = self.history_stack.pop()
+            self.current = previous_screen
+
     cart_items = ListProperty([])
 
+    
+
+class SearchScreen(Screen):
+    def on_text(self, text):
+        app = MDApp.get_running_app()
+        print(f"Text changed: {text}")  # Debug statement
+        app.search_products(text)
+
 class MyMainApp(MDApp):
+
     cart_items = ListProperty([])
     def add_to_cart(self, product):
         self.cart_items.append(product)
     def build(self):
 
+        self.previous_screen = None
+        self.window_manager = WindowManager()
+        self.db = db
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
         self.store = JsonStore('user_data.json')
@@ -2004,6 +2004,29 @@ class MyMainApp(MDApp):
             self.root.current = "login"
         
         return self.root
+
+    def logout(self):
+        # Sign out from Firebase
+        self.firebase_logout()
+
+        # Navigate back to the login screen
+        self.go_to_screen("login")
+
+    def firebase_logout(self):
+        try:
+            # Assuming you're using Firebase's Admin SDK for logout
+            # This will clear the session on the client-side
+            auth.revoke_refresh_tokens(self.get_user_id())
+            print("User logged out successfully")
+        except Exception as e:
+            print(f"Error logging out: {e}")
+
+    def get_user_id(self):
+        # Example method to retrieve the current user's ID
+        # You might need to adjust this based on how you store user data
+        return auth.get_user().uid  # Example, adjust to your setup
+
+    
     
     def validate_token(self, token):
         try:
@@ -2011,24 +2034,118 @@ class MyMainApp(MDApp):
             return True
         except:
             return False
-    
-    def back_button(self):
-        # Switch to the 'app_screen'
-        self.root.current = 'app_screen'
-    def search_products(self, query):
-        # Implement your product search logic here
-        print(f"Searching for: {query}")
+        
+    def go_to_screen(self, screen_name):
+        screen_manager = self.root
+        if screen_manager.current != screen_name:
+            screen_manager.add_to_history(screen_manager.current)
+            screen_manager.current = screen_name
 
-    selected_category = StringProperty('')
+    def back_button(self):
+        screen_manager = self.root
+        screen_manager.back_button()
+
+    def search_products(self, search_text):
+        # Remove leading and trailing spaces from the search text
+        search_text = search_text.strip()
+
+        # Clear the product list if the search text is empty
+        if not search_text:
+            self.update_product_list([])
+            return
+
+        # Convert the search text to uppercase for querying
+        search_text_upper = search_text.upper()
+
+        # Query products where 'name' contains the search text
+        products_ref = db.collection('products')
+        query = products_ref.stream()
+
+        products = []
+        for doc in query:
+            product_data = doc.to_dict()
+            
+            # Convert the name from Firestore to uppercase for comparison
+            product_name_upper = product_data['name'].upper()
+            
+            # Check if the product name contains the search text
+            if search_text_upper in product_name_upper:
+                # Convert the name from Firestore to lowercase for display
+                product_data['name'] = product_data['name'].lower()
+                products.append(product_data)
+
+        # Update the product list with the filtered results
+        self.update_product_list(products)
+
+    def update_product_list(self, products):
+        print("update_product_list has been called")
+        search_screen = self.root.get_screen('search_screen')
+        product_list = search_screen.ids.product_list
+
+        product_list.clear_widgets()
+
+        for product in products:
+            card = MDCard(
+                orientation='vertical',
+                size_hint=(1, None),
+                height=dp(100),
+                padding=dp(10),
+                spacing=dp(10),
+                pos_hint={"center_x": 0.5},
+            )
+
+            card_layout = BoxLayout(orientation='horizontal', spacing=dp(10))
+
+            image_size = dp(80)
+            image_source = product['image_url']
+            try:
+                product_image = FitImage(
+                    source=image_source,
+                    size_hint=(None, None),
+                    size=(image_size, image_size),
+                    allow_stretch=True,
+                    keep_ratio=True
+                )
+            except Exception as e:
+                print(f"Failed to load image: {e}")
+                fallback_image_url = 'https://via.placeholder.com/80'
+                product_image = KivyImage(
+                    source=fallback_image_url,
+                    size_hint=(None, None),
+                    size=(image_size, image_size),
+                    allow_stretch=True,
+                    keep_ratio=True
+                )
+
+            card_layout.add_widget(product_image)
+
+            text_layout = BoxLayout(orientation='vertical', spacing=dp(5))
+            text_layout.add_widget(MDLabel(
+                text=product['name'],
+                theme_text_color="Primary",
+                size_hint_y=None,
+                height=dp(20)
+            ))
+
+            text_layout.add_widget(MDLabel(
+                text=f"${product['price']:.2f}",
+                theme_text_color="Secondary",
+                size_hint_y=None,
+                height=dp(20)
+            ))
+
+            card_layout.add_widget(text_layout)
+            card.add_widget(card_layout)
+            product_list.add_widget(card)
+
+
+
+        selected_category = StringProperty('')
 
     def on_card_click(self, category_name):
         self.selected_category = category_name
-        self.root.current = "product_screen"
+        self.go_to_screen("product_screen")
         self.root.get_screen("product_screen").display_category_products(category_name)
-
-    def on_brand_click(self, brand):
-        # Implement your brand click logic here
-        print(f"Brand clicked: {brand}")
 
 if __name__ == "__main__":
     Window.size = (360, 640)

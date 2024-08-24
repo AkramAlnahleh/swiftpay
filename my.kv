@@ -14,6 +14,7 @@ WindowManager:
     OrdersScreen:
     OrderDetailScreen:
     SavedCardsScreen:
+    SearchScreen:
     AddCardScreen:
     
 <Login>:
@@ -101,137 +102,192 @@ WindowManager:
             size_hint_x: 1
             md_bg_color: "#FF5623"
             on_release:
-                root.manager.current = "registration"
+                on_release: app.go_to_screen("registration")
                 user.text = ""
                 passw.text = ""
 
 <Registration>:
     name: "registration"
+    canvas.before:
+        Color:
+            rgba: app.theme_cls.bg_light  # Light background color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     MDBoxLayout:
         orientation: 'vertical'
-        padding: dp(20)
-        spacing: dp(10)
+        padding: dp(10)
+        spacing: dp(15)
+        pos_hint: {"center_x": 0.5}
+        size_hint_x: None
+        width: dp(360)
 
-        MDTextField:
-            id: f_name
-            hint_text: "First Name"
-            font_size: sp(18)
-            on_text:
-                self.text = self.text.replace(" ", "")
-            write_tab: False
+        MDCard:
+            orientation: 'vertical'
+            padding: dp(16)
+            spacing: dp(12)
+            elevation: 10
+            radius: [dp(12)]
+            size_hint_y: None
+            height: self.minimum_height
 
-        MDLabel:
-            id: f_name_error
-            text: ""
-            font_size: sp(12)
-            theme_text_color: "Error"
-            size_hint_y: None
-            height: self.texture_size[1]
-        
-        MDTextField:
-            id: l_name
-            hint_text: "Last Name"
-            font_size: sp(18)
-            on_text:
-                self.text = self.text.replace(" ", "")
-            write_tab: False
-        MDLabel:
-            id: l_name_error
-            text: ""
-            font_size: sp(12)
-            theme_text_color: "Error"
-            size_hint_y: None
-            height: self.texture_size[1]
-        
-        MDTextField:
-            id: email
-            hint_text: "Email"
-            font_size: sp(18)
-            on_text:
-                self.text = self.text.replace(" ", "")
-            write_tab: False
-        MDLabel:
-            id: email_error
-            text: ""
-            font_size: sp(12)
-            theme_text_color: "Error"
-            size_hint_y: None
-            height: self.texture_size[1]
-        
-        MDBoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: dp(48)
-            spacing: dp(10)
+            MDLabel:
+                text: "Register"
+                font_size: sp(24)
+                halign: 'center'
+                theme_text_color: "Primary"
+                size_hint_y: None
+                height: dp(40)
 
             MDTextField:
-                id: password
-                password: True
-                hint_text: "Password"
-                font_size: sp(18)
-                right_icon: "eye-off"
-                icon_right_color: app.theme_cls.primary_color  # Adjust icon color if needed
+                id: f_name
+                hint_text: "First Name"
+                font_size: sp(16)
+                mode: "rectangle"
+                padding_x: dp(12)
+                size_hint_y: None
+                height: dp(50)
                 on_text:
                     self.text = self.text.replace(" ", "")
-                write_tab: False
 
-            MDCheckbox:
-                id: show_password_checkbox
-                size_hint: None, None
-                size: dp(48), dp(48)
-                icon: "eye-off"
-                on_press:
-                    password.password = not self.active
-                    self.icon = "eye" if self.active else "eye-off"
-                    c_password.password = not self.active  # Apply the same visibility to confirm password
-                    c_password.right_icon = "eye" if self.active else "eye-off"
-                    password.focus = True  # Ensure focus remains on password field after toggling
+            MDLabel:
+                id: f_name_error
+                text: ""
+                font_size: sp(12)
+                theme_text_color: "Error"
+                size_hint_y: None
+                height: self.texture_size[1]
 
-        MDLabel:
-            id: password_error
-            text: ""
-            font_size: sp(12)
-            theme_text_color: "Error"
-            size_hint_y: None
-            height: self.texture_size[1]
-               
-        MDTextField:
-            id: c_password
-            password: True
-            hint_text: "Confirm Password"
-            font_size: sp(18)
-            on_text:
-                self.text = self.text.replace(" ", "")
-            write_tab: False
-        
-        MDTextField:
-            id: b_date
-            hint_text: "Select your birth date"
-            font_size: sp(18)
-            on_focus: if self.focus: root.show_date_picker()
-            on_text:
-                self.text = self.text.replace(" ", "")
-            write_tab: False
-        MDLabel:
-            id: b_date_error
-            text: ""
-            font_size: sp(12)
-            theme_text_color: "Error"
-            size_hint_y: None
-            height: self.texture_size[1]
+            MDTextField:
+                id: l_name
+                hint_text: "Last Name"
+                font_size: sp(16)
+                mode: "rectangle"
+                padding_x: dp(12)
+                size_hint_y: None
+                height: dp(50)
+                on_text:
+                    self.text = self.text.replace(" ", "")
 
-        BoxLayout:
-            spacing: dp(10)
-            MDRaisedButton:
-                text: "Register"
-                font_size: sp(18)
-                on_release: 
-                    root.register_attempt()
-            MDRaisedButton:
-                text: "Back to Login"
-                font_size: sp(18)
-                on_release: 
-                    root.manager.current = "login"
+            MDLabel:
+                id: l_name_error
+                text: ""
+                font_size: sp(12)
+                theme_text_color: "Error"
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MDTextField:
+                id: email
+                hint_text: "Email"
+                font_size: sp(16)
+                mode: "rectangle"
+                padding_x: dp(12)
+                size_hint_y: None
+                height: dp(50)
+                on_text:
+                    self.text = self.text.replace(" ", "")
+
+            MDLabel:
+                id: email_error
+                text: ""
+                font_size: sp(12)
+                theme_text_color: "Error"
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MDBoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(50)
+                spacing: dp(10)
+                
+                MDTextField:
+                    id: password
+                    password: True
+                    hint_text: "Password"
+                    font_size: sp(16)
+                    right_icon: "eye-off"
+                    icon_right_color: app.theme_cls.primary_color
+                    mode: "rectangle"
+                    padding_x: dp(12)
+                    size_hint_x: 0.7
+                    size_hint_y: None
+                    height: dp(50)
+                    on_text:
+                        self.text = self.text.replace(" ", "")
+
+                MDCheckbox:
+                    id: show_password_checkbox
+                    size_hint: None, None
+                    size: dp(48), dp(48)
+                    on_press:
+                        password.password = not self.active
+                        c_password.password = not self.active
+                        password.right_icon = "eye" if self.active else "eye-off"
+                        c_password.right_icon = "eye" if self.active else "eye-off"
+                        password.focus = True
+
+            MDLabel:
+                id: password_error
+                text: ""
+                font_size: sp(12)
+                theme_text_color: "Error"
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MDTextField:
+                id: c_password
+                password: True
+                hint_text: "Confirm Password"
+                font_size: sp(16)
+                mode: "rectangle"
+                padding_x: dp(12)
+                size_hint_y: None
+                height: dp(50)
+                on_text:
+                    self.text = self.text.replace(" ", "")
+
+            MDTextField:
+                id: b_date
+                hint_text: "Select your birth date"
+                font_size: sp(16)
+                mode: "rectangle"
+                padding_x: dp(12)
+                size_hint_y: None
+                height: dp(50)
+                on_focus: if self.focus: root.show_date_picker()
+                on_text:
+                    self.text = self.text.replace(" ", "")
+
+            MDLabel:
+                id: b_date_error
+                text: ""
+                font_size: sp(12)
+                theme_text_color: "Error"
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MDBoxLayout:
+                spacing: dp(10)
+                size_hint_y: None
+                height: dp(50)
+
+                MDRaisedButton:
+                    text: "Register"
+                    font_size: sp(16)
+                    on_release: 
+                        root.register_attempt()
+                    size_hint_x: 0.5
+
+                MDRaisedButton:
+                    text: "Back to Login"
+                    font_size: sp(16)
+                    on_release: 
+                        app.go_to_screen("login")
+                    size_hint_x: 0.5
+
 
 <AppScreen>:
     
@@ -251,7 +307,7 @@ WindowManager:
                 hint_text: "Search"
                 mode: "round"
                 icon_right: "magnify"
-                on_text: app.search_products(self.text)  # Calls search on each text input
+                on_focus: app.go_to_screen("search_screen")
                 line_color_focus: 0, 0.5, 0.5, 1  # Color when focused
                 line_color_normal: 0, 0.5, 0.5, 1  # Color when not focused
                 text_color: 1, 0, 0, 1  # Text color
@@ -526,7 +582,7 @@ WindowManager:
                     size_hint: None, None
                     size: dp(50), dp(50)
                     elevation_normal: 8
-                    on_release: app.root.current = "app_screen"
+                    on_release: app.go_to_screen("app_screen")
                     pos_hint: {'center_y': 0.5}
 
                 MDFloatingActionButton:
@@ -542,7 +598,7 @@ WindowManager:
                     md_bg_color: app.theme_cls.primary_color
                     size_hint: None, None
                     size: dp(50), dp(50)
-                    on_release: app.root.current = "cart_screen"
+                    on_release: app.go_to_screen("cart_screen")
                     pos_hint: {'center_y': 0.5}
 
                 MDFloatingActionButton:
@@ -550,7 +606,7 @@ WindowManager:
                     md_bg_color: app.theme_cls.primary_color
                     size_hint: None, None
                     size: dp(50), dp(50)
-                    on_release: app.root.current = "more"
+                    on_release: app.go_to_screen("more")
                     pos_hint: {'center_y': 0.5}
 
 <CartScreen>:
@@ -596,7 +652,7 @@ WindowManager:
                 text: 'Checkout'
                 size_hint_x: 0.2
                 icon: 'check-circle'  # Example icon
-                on_release: app.root.current = 'ShippingScreen'
+                on_release: app.go_to_screen("ShippingScreen")
 
 <More_Option>:
     name: "more"
@@ -617,13 +673,6 @@ WindowManager:
                 spacing: "10dp"
 
                 OneLineIconListItem:
-                    text: "Profile"
-                    on_release:
-                        app.root.current = "profile"
-                    IconLeftWidget:
-                        icon: "account-circle"
-
-                OneLineIconListItem:
                     text: "Location"
                     on_release:
                         root.open_mall_location()  # Directly opens the mall location
@@ -633,28 +682,28 @@ WindowManager:
                 OneLineIconListItem:
                     text: "Store Receipts"
                     on_release:
-                        app.root.current = "receipts"  # Update this to the correct screen name
+                    on_release: app.go_to_screen("receipts")
                     IconLeftWidget:
                         icon: "receipt"
 
                 OneLineIconListItem:
                     text: "Wishlist"
                     on_release:
-                        app.root.current = "wishlist"
+                        app.go_to_screen("wishlist")
                     IconLeftWidget:
                         icon: "heart"
 
                 OneLineIconListItem:
                     text: "Orders"
                     on_release:
-                        app.root.current = "orders_screen"
+                        app.go_to_screen("orders_screen")
                     IconLeftWidget:
                         icon: "package"
 
                 OneLineIconListItem:
                     text: "Saved Cards"
                     on_release:
-                        app.root.current = "saved_cards"
+                        app.go_to_screen("saved_cards")
                     IconLeftWidget:
                         icon: "wallet"
 
@@ -683,7 +732,7 @@ WindowManager:
             text: "Add New Card"
             size_hint_y: None
             height: dp(50)
-            on_release: app.root.current = "add_card"
+            on_release: app.go_to_screen("add_card")
 
 <AddCardScreen>:
     name: 'add_card'
@@ -718,7 +767,7 @@ WindowManager:
                 
         MDRaisedButton:
             text: "Back to Saved Cards"
-            on_release: app.root.current = 'saved_cards'
+            on_release: app.go_to_screen("saved_cards")
 
 
 <WishlistScreen>:
@@ -794,7 +843,7 @@ WindowManager:
                     height: dp(40)  
                     padding_x: dp(10)
                     pos_hint: {"center_y": 0.5} 
-                    on_text: app.root.get_screen('product_screen').filter_products(self.text)
+                    on_focus: app.go_to_screen("search_screen")
 
         ScrollView:
             id: product_scroll
@@ -820,7 +869,7 @@ WindowManager:
 
         MDTopAppBar:
             title: "Product Details"
-            left_action_items: [["arrow-left", lambda x: app.back_button()]]
+            left_action_items: [["arrow-left", lambda x: app.go_to_screen("app_screen")]]
             elevation: 12
             size_hint_y: None
             height: dp(56)
@@ -1061,50 +1110,33 @@ WindowManager:
             size_hint_y: None
             height: self.texture_size[1]
 
-        MDBoxLayout:
-            orientation: 'vertical'
-            spacing: dp(10)
+        MDDropDownItem:
+            id: card_selection_button
+            text: "Select Card"
+            on_release: root.menu.open() if root.menu else None
+
+        MDTextField:
+            id: card_number
+            hint_text: "Card Number"
+            input_filter: "int"
+            max_text_length: 16
             size_hint_y: None
-            height: self.minimum_height
+            height: dp(48)
 
-            MDTextField:
-                id: card_number
-                hint_text: "Card Number"
-                icon_right: "credit-card"
-                mode: "rectangle"
+        MDTextField:
+            id: expiry_date
+            hint_text: "Expiry Date"
+            size_hint_y: None
+            height: dp(48)
 
-            MDTextField:
-                id: expiry_date
-                hint_text: "Expiry Date (MM/YY)"
-                icon_right: "calendar"
-                mode: "rectangle"
+        MDTextField:
+            id: cvv
+            hint_text: "CVV"
+            input_filter: "int"
+            max_text_length: 3
+            size_hint_y: None
+            height: dp(48)
 
-            MDTextField:
-                id: cvv
-                hint_text: "CVV"
-                icon_right: "lock"
-                mode: "rectangle"
-                password: True
-
-            MDBoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: dp(48)
-                spacing: dp(10)
-
-                MDCheckbox:
-                    id: save_card_checkbox
-                    active: False
-                    size_hint: None, None
-                    size: dp(48), dp(48)
-
-                MDLabel:
-                    text: "Save card information for future use"
-                    halign: "left"
-                    valign: "center"
-                    size_hint_y: None
-                    height: dp(48)
-                    text_size: self.width, None
         MDBoxLayout:
             orientation: 'horizontal'
             spacing: dp(10)
@@ -1119,8 +1151,9 @@ WindowManager:
             MDFlatButton:
                 text: "Cancel"
                 pos_hint: {"center_x": 0.5}
-                on_release: root.go_back_to_previous_screen()
-    
+                on_release: app.back_button()
+
+
         
 <OrderSummaryScreen>:
     name: "order_summary_screen"
@@ -1129,6 +1162,7 @@ WindowManager:
 
         MDTopAppBar:
             title: "Order Summary"
+            left_action_items: [['arrow-left', lambda x: app.back_button()]]
             elevation: 10
 
         ScrollView:
@@ -1301,3 +1335,32 @@ WindowManager:
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
+
+<SearchScreen>:
+    name: "search_screen"
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(10)
+        spacing: dp(10)
+
+        MDTextField:
+            id: search_field
+            hint_text: "Search"
+            mode: "round"
+            icon_right: "magnify"
+            on_text: root.on_text(self.text)
+            line_color_focus: 0, 0.5, 0.5, 1
+            line_color_normal: 0, 0.5, 0.5, 1
+            text_color: 1, 0, 0, 1
+            icon_right_color: 0, 0.5, 0.5, 1
+            size_hint_y: None
+            height: dp(50)
+
+        ScrollView:
+            MDGridLayout:
+                id: product_list
+                cols: 1
+                spacing: dp(10)
+                padding: dp(10)
+                size_hint_y: 1
+                height: self.minimum_height

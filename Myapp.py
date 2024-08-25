@@ -1,3 +1,4 @@
+from kivymd.uix.backdrop.backdrop import MDTopAppBar
 from kivymd.uix.filemanager.filemanager import FitImage
 import re
 import firebase_admin
@@ -14,6 +15,16 @@ from kivymd.uix.label import MDLabel
 from kivy.metrics import dp
 from firebase_admin import firestore
 from kivy.uix.popup import Popup
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.clock import Clock
+from kivy.graphics.texture import Texture
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDRaisedButton
+import cv2
+from pyzbar import pyzbar
 from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
 from datetime import date
 import os
@@ -46,6 +57,21 @@ from kivy.properties import ListProperty
 import threading
 from kivy.clock import Clock
 from kivymd.toast import toast
+from kivy.uix.screenmanager import Screen
+from plyer import camera
+import cv2
+from pyzbar.pyzbar import decode
+from kivy.clock import Clock
+from kivy.graphics.texture import Texture
+from firebase_admin import firestore
+import cv2
+from pyzbar import pyzbar
+import firebase_admin
+from firebase_admin import credentials, firestore
+from kivy.app import App
+from kivy.uix.image import Image
+from kivy.clock import Clock
+from kivy.graphics.texture import Texture
 
 wishlist_items = []
 
@@ -157,12 +183,9 @@ class Login(Screen):
         except:
             print("auto login failed")
 
-class BarcodeScreen(Screen):
-    def on_symbols(self, instance, symbols):
-        if symbols:
-            for symbol in symbols:
-                print(f"Scanned barcode: {symbol.data.decode('utf-8')}")
-                # Add  logic to handle the  barcode scan data
+
+
+
 
 class Registration(Screen):
     def show_date_picker(self):
@@ -671,6 +694,197 @@ class BaseScreen(Screen):
             item['amount'] = new_amount
 
         self.update_cart_screen()
+
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDRaisedButton
+
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+
+class BarcodeScanner(MDBoxLayout):
+    def __init__(self, **kwargs):
+        super(BarcodeScanner, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.build()
+
+    def build(self):
+        self.toolbar = MDTopAppBar(title="Barcode Scanner")
+        self.toolbar.pos_hint = {"top": 1}
+        self.toolbar.left_action_items = [["arrow-left", lambda x: self.stop_scanning()]]
+        self.add_widget(self.toolbar)
+
+        self.img = Image(size_hint=(1, 0.6))
+        self.add_widget(self.img)
+
+        self.label = MDLabel(
+            text="Scanning for Barcodes...",
+            size_hint=(1, 0.1),
+            halign="center",
+            theme_text_color="Secondary"
+        )
+        self.add_widget(self.label)
+
+        self.stop_button = MDRaisedButton(
+            text="Stop Scanning",
+            size_hint=(0.5, None),
+            height="48dp",
+            pos_hint={"center_x": 0.5, "center_y": 0.1},
+            on_release=self.stop_scanning
+        )
+        self.add_widget(self.stop_button)
+
+    def start_camera(self):
+        self.capture = cv2.VideoCapture(0)
+        if not self.capture.isOpened():
+            self.label.text = "Error: Could not open the camera."
+            return
+
+        Clock.schedule_interval(self.update, 1.0 / 30.0)
+
+    def update(self, dt):
+        ret, frame = self.capture.read()
+        if not ret:
+            self.label.text = "Error: Failed to capture frame."
+            return
+
+        # Existing code for barcode detection
+        barcodes = pyzbar.decode(frame)
+        for barcode in barcodes:
+            barcode_data = barcode.data.decode('utf-8')
+            product = self.fetch_product_from_firestore(barcode_data)
+            if product:
+                self.show_product_details(product)
+            else:
+                self.label.text = "Product not found."
+
+            self.capture.release()
+            Clock.unschedule(self.update)
+            return
+
+        buf = cv2.flip(frame, 0).tobytes()
+        image_texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+        image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+        self.img.texture = image_texture
+
+    def fetch_product_from_firestore(self, product_id):
+        try:
+            products_ref = db.collection('products')
+            query = products_ref.where('product_id', '==', product_id).stream()
+
+            for doc in query:
+                return doc.to_dict()
+
+            print("Product not found.")
+            return None
+
+        except Exception as e:
+            print(f"Error fetching product: {e}")
+            return None
+
+    def show_product_details(self, product):
+        # Clear the current widgets
+        self.clear_widgets()
+
+        # Rebuild the layout to show product details
+        product_image = FitImage(
+            source=product.get('image_url', 'default_image.png'),
+            size_hint=(1, 0.4),
+            allow_stretch=True,
+            keep_ratio=False
+        )
+        self.add_widget(product_image)
+
+        # Product name
+        name_label = MDLabel(
+            text=product.get('name', 'No Name'),
+            font_style='H4',
+            size_hint=(1, 0.1),
+            halign='center'
+        )
+        self.add_widget(name_label)
+
+        # Product price
+        price = product.get('price', 'N/A')
+        offer = product.get('offer')
+        if offer:
+            discounted_price = price * (1 - offer / 100)
+            price_label = MDLabel(
+                text=f"Price: {price} | After Discount: {discounted_price:.2f}",
+                theme_text_color='Secondary',
+                size_hint=(1, 0.05),
+                halign='center'
+            )
+        else:
+            price_label = MDLabel(
+                text=f"Price: {price}",
+                theme_text_color='Secondary',
+                size_hint=(1, 0.05),
+                halign='center'
+            )
+        self.add_widget(price_label)
+
+        # Product description
+        description_label = MDLabel(
+            text=product.get('description', 'No description available'),
+            size_hint=(1, 0.1),
+            halign='center'
+        )
+        self.add_widget(description_label)
+
+        # Quantity adjustment layout
+        quantity_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), padding=[20, 0, 20, 0])
+        self.quantity = 1
+        self.quantity_label = MDLabel(
+            text=str(self.quantity),
+            size_hint=(0.2, 1),
+            halign='center',
+            valign='middle'
+        )
+
+        decrement_button = MDIconButton(icon="minus", on_release=self.decrement_quantity)
+        increment_button = MDIconButton(icon="plus", on_release=self.increment_quantity)
+
+        quantity_layout.add_widget(decrement_button)
+        quantity_layout.add_widget(self.quantity_label)
+        quantity_layout.add_widget(increment_button)
+        self.add_widget(quantity_layout)
+
+        # Add to Cart and Cancel buttons
+        button_layout = BoxLayout(orientation='horizontal', spacing=10, size_hint=(1, 0.15), padding=[20, 0, 20, 0])
+        add_to_cart_button = MDRaisedButton(text="Add to Cart", on_release=lambda x: self.add_to_cart(product))
+        cancel_button = MDFlatButton(text="Cancel", on_release=lambda x: self.build())
+        button_layout.add_widget(add_to_cart_button)
+        button_layout.add_widget(cancel_button)
+        self.add_widget(button_layout)
+
+    def increment_quantity(self, *args):
+        self.quantity += 1
+        self.quantity_label.text = str(self.quantity)
+
+    def decrement_quantity(self, *args):
+        if self.quantity > 1:
+            self.quantity -= 1
+            self.quantity_label.text = str(self.quantity)
+
+    def add_to_cart(self, product):
+        # Your logic to add the product to the cart with the selected quantity
+        print(f"Product added to cart: {product['name']}, Quantity: {self.quantity}")
+        self.build()  # Rebuild the original scanner interface
+
+    def stop_scanning(self, *args):
+        if self.capture and self.capture.isOpened():
+            self.capture.release()
+        Clock.unschedule(self.update)
+        self.parent.manager.current = 'app_screen'  # Replace 'previous_screen' with the actual screen name you want to go back to
+        print("Scanning stopped.")
+
+# In your kv file or directly in your app:
+
+
+
+
 
 
 class ProductDetailsScreen(BaseScreen):
@@ -1256,6 +1470,13 @@ class OrderSummaryScreen(BaseScreen):
         close_button.bind(on_release=popup.dismiss)
         popup.open()
 
+
+class BarcodeScannerScreen(Screen):
+
+    def on_enter(self):
+        # Start the camera when entering the screen
+        self.ids.barcode_scanner.start_camera()
+
 class WishlistScreen(Screen):
     def on_pre_enter(self, *args):
         # This method is called every time the screen is about to be displayed
@@ -1582,7 +1803,11 @@ class AppScreen(BaseScreen):
         self.loading_spinner = MDSpinner(size_hint=(None, None), size=(dp(20), dp(20)), active=True)
         self.product_data_list = []
         self.carousel_initialized = False  # Flag to track carousel initialization
+        super(AppScreen, self).__init__(**kwargs)
+        self.capture = None
+        self.is_camera_running = False
 
+    
 
     def populate_deals_carousel(self):
         products = self.fetch_all_products()
@@ -1978,13 +2203,18 @@ class SearchScreen(Screen):
         print(f"Text changed: {text}")  # Debug statement
         app.search_products(text)
 
+
+
 class MyMainApp(MDApp):
 
     cart_items = ListProperty([])
+
     def add_to_cart(self, product):
         self.cart_items.append(product)
+
     def build(self):
 
+        self.scanner = BarcodeScanner()
         self.previous_screen = None
         self.window_manager = WindowManager()
         self.db = db
@@ -1993,6 +2223,7 @@ class MyMainApp(MDApp):
         self.store = JsonStore('user_data.json')
         root_widget = Builder.load_file('my.kv')
         self.root = root_widget
+
         
         if self.store.exists('credentials'):
             token = self.store.get('credentials')['token']
@@ -2004,7 +2235,8 @@ class MyMainApp(MDApp):
             self.root.current = "login"
         
         return self.root
-
+    def start_camera(self):
+        self.scanner.start_camera()
     def logout(self):
         # Sign out from Firebase
         self.firebase_logout()

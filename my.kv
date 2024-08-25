@@ -16,6 +16,7 @@ WindowManager:
     SavedCardsScreen:
     SearchScreen:
     AddCardScreen:
+    BarcodeScannerScreen:
     
 <Login>:
     name: "login"
@@ -290,11 +291,8 @@ WindowManager:
 
 
 <AppScreen>:
-    
+        
     name: "app_screen"
-    Image:
-        source: "back app.jpg"
-    
     MDBoxLayout:
         orientation: 'vertical'
 
@@ -591,7 +589,11 @@ WindowManager:
                     size_hint: None, None
                     size: dp(50), dp(50)
                     elevation_normal: 12
-                    pos_hint: {'center_y': 0.5}
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_release: app.go_to_screen('barcode_scanner')
+
+
+                    
                     
                 MDFloatingActionButton:
                     icon: "cart"
@@ -1364,3 +1366,8 @@ WindowManager:
                 padding: dp(10)
                 size_hint_y: 1
                 height: self.minimum_height
+
+<BarcodeScannerScreen>:
+    name: 'barcode_scanner'
+    BarcodeScanner:
+        id: barcode_scanner

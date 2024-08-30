@@ -1,5 +1,7 @@
 from kivymd.uix.backdrop.backdrop import MDTopAppBar
 from kivymd.uix.filemanager.filemanager import FitImage
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 import re
 import firebase_admin
 import requests
@@ -182,10 +184,6 @@ class Login(Screen):
                 self.manager.current = 'login'
         except:
             print("auto login failed")
-
-
-
-
 
 class Registration(Screen):
     def show_date_picker(self):
@@ -575,11 +573,6 @@ class BaseScreen(Screen):
             total_sum_label.text = f'Total: {total_sum:.2f} JOD'
         else:
             print("Error: cart_screen is None.")
-
-
-
-
-
     def remove_from_cart(self, item):
         if item in self.manager.cart_items:
             self.manager.cart_items.remove(item)
@@ -695,18 +688,11 @@ class BaseScreen(Screen):
 
         self.update_cart_screen()
 
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDRaisedButton
-
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDRaisedButton, MDFlatButton
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-
 class BarcodeScanner(MDBoxLayout):
     def __init__(self, **kwargs):
         super(BarcodeScanner, self).__init__(**kwargs)
         self.orientation = 'vertical'
+        self.cart = []  # Initialize an empty list to store cart items
         self.build()
 
     def build(self):
@@ -749,7 +735,7 @@ class BarcodeScanner(MDBoxLayout):
             self.label.text = "Error: Failed to capture frame."
             return
 
-        # Existing code for barcode detection
+        # Barcode detection logic
         barcodes = pyzbar.decode(frame)
         for barcode in barcodes:
             barcode_data = barcode.data.decode('utf-8')
@@ -791,6 +777,7 @@ class BarcodeScanner(MDBoxLayout):
         product_image = FitImage(
             source=product.get('image_url', 'default_image.png'),
             size_hint=(1, 0.4),
+            radius=[dp(10)] * 4,
             allow_stretch=True,
             keep_ratio=False
         )
@@ -805,7 +792,7 @@ class BarcodeScanner(MDBoxLayout):
         )
         self.add_widget(name_label)
 
-        # Product price
+        # Product price with discount
         price = product.get('price', 'N/A')
         offer = product.get('offer')
         if offer:
@@ -854,7 +841,7 @@ class BarcodeScanner(MDBoxLayout):
         # Add to Cart and Cancel buttons
         button_layout = BoxLayout(orientation='horizontal', spacing=10, size_hint=(1, 0.15), padding=[20, 0, 20, 0])
         add_to_cart_button = MDRaisedButton(text="Add to Cart", on_release=lambda x: self.add_to_cart(product))
-        cancel_button = MDFlatButton(text="Cancel", on_release=lambda x: self.build())
+        cancel_button = MDFlatButton(text="Cancel", on_release=lambda x: self.stop_scanning())
         button_layout.add_widget(add_to_cart_button)
         button_layout.add_widget(cancel_button)
         self.add_widget(button_layout)
@@ -869,8 +856,13 @@ class BarcodeScanner(MDBoxLayout):
             self.quantity_label.text = str(self.quantity)
 
     def add_to_cart(self, product):
-        # Your logic to add the product to the cart with the selected quantity
-        print(f"Product added to cart: {product['name']}, Quantity: {self.quantity}")
+        product_with_quantity = product.copy()  # Copy product details
+        product_with_quantity['amount'] = self.quantity  # Add quantity information
+        self.manager.cart_items.append(product_with_quantity)  # Add to cart
+
+        # Update the cart screen
+        self.manager.get_screen('cart_screen').update_cart_screen()
+
         self.build()  # Rebuild the original scanner interface
 
     def stop_scanning(self, *args):
@@ -879,13 +871,6 @@ class BarcodeScanner(MDBoxLayout):
         Clock.unschedule(self.update)
         self.parent.manager.current = 'app_screen'  # Replace 'previous_screen' with the actual screen name you want to go back to
         print("Scanning stopped.")
-
-# In your kv file or directly in your app:
-
-
-
-
-
 
 class ProductDetailsScreen(BaseScreen):
     product_name = StringProperty()
@@ -914,7 +899,7 @@ class ProductDetailsScreen(BaseScreen):
             "brand": self.product_brand,
             "offer": self.product_offer
             
-        }
+                        }
 
         try:
             wishlist_ref = db.collection('users').document(uid).collection('wishlist').document('user_wishlist')
@@ -940,7 +925,6 @@ class ProductDetailsScreen(BaseScreen):
 
         except Exception as e:
             print(f"Error adding item to wishlist: {e}")
-
 
     def update_discount_price(self):
         # Calculate the discount price
@@ -1126,20 +1110,17 @@ class PaymentScreen(Screen):
                 "viewclass": "OneLineListItem",
                 "on_release": lambda x=card: self.on_card_selected(x)
             })
-
         # Add the "Add a New Card" option
         menu_items.append({
             "text": "Add a New Card",
             "viewclass": "OneLineListItem",
             "on_release": self.on_add_card_selected
         })
-
         self.menu = MDDropdownMenu(
             caller=self.ids.card_selection_button,
             items=menu_items,
             width_mult=4,
         )
-
     def on_card_selected(self, card):
         """Handle card selection."""
         self.set_card_info(card)
@@ -1612,12 +1593,6 @@ class WishlistScreen(Screen):
         # Switch to the ProductDetailsScreen
         self.go_to_screen("product_details_screen")
 
-
-
-
-
-
-
 class ReceiptsScreen(Screen):
     def on_enter(self):
         self.populate_receipts()
@@ -1808,7 +1783,7 @@ class AppScreen(BaseScreen):
         self.is_camera_running = False
 
     
-
+    
     def populate_deals_carousel(self):
         products = self.fetch_all_products()
 
@@ -1833,7 +1808,7 @@ class AppScreen(BaseScreen):
                     size_hint=(1, 1),
                     allow_stretch=True,
                     keep_ratio=False,
-                    radius=[dp(15)],
+                    radius=[dp(15)] * 4,
                     opacity=1
                 )
 
@@ -1871,7 +1846,6 @@ class AppScreen(BaseScreen):
 
     cart_items = ListProperty([])
     
-
     def start_auto_scroll(self, carousel):
         def scroll_next(dt):
             carousel.load_next(mode='next')
@@ -1890,7 +1864,6 @@ class AppScreen(BaseScreen):
             threading.Thread(target=self.update_random_products).start()
             self.has_updated_random_products = True
 
-
     def fetch_all_products(self):
         products_ref = db.collection('products')
         docs = products_ref.stream()
@@ -1907,7 +1880,6 @@ class AppScreen(BaseScreen):
 
     def display_products(self, products):
         self.ids.random_product_grid.clear_widgets()
-
         card_size = (dp(152), dp(250))
         for product in products:
             product_card = MDCard(
@@ -1920,14 +1892,12 @@ class AppScreen(BaseScreen):
                 orientation='vertical',
                 on_release=partial(self.show_product_details, product)
             )
-
             box = BoxLayout(
                 orientation='vertical',
                 spacing=dp(10),
                 size_hint_y=None,
                 height=dp(250)
             )
-
             product_image = FitImage(
                 source=product.get('image_url', ''),
                 size_hint=(None, None),
@@ -1935,7 +1905,6 @@ class AppScreen(BaseScreen):
                 radius=[dp(10)] * 4,
                 pos_hint={"center_x": 0.5}
             )
-
             # Name and price container
             name_price_box = BoxLayout(
                 orientation='vertical',
@@ -1943,7 +1912,6 @@ class AppScreen(BaseScreen):
                 size_hint_y=None,
                 height=dp(60)
             )
-
             # Truncate product name if it's too long
             product_name_text = product.get('name', 'No Name')
             max_name_length = 20  # Maximum characters before truncation
@@ -2082,6 +2050,92 @@ class ProductScreen(BaseScreen):
                 self.load_products()
             self.has_loaded_products = True
 
+
+    def display_brand_products(self, brand_name):
+        # Clear any existing product display
+        product_box = self.ids.product_grid
+        product_box.clear_widgets()
+        print(f"Displaying products for brand: {brand_name}")
+
+        # Fetch products associated with the selected brand from Firestore
+        products_ref = db.collection('products').where('brand', '==', brand_name)
+        try:
+            products = products_ref.stream()
+            print(f"Products query executed for brand: {brand_name}")
+        except Exception as e:
+            print(f"Error retrieving products for brand {brand_name}: {e}")
+            return
+
+        products_found = False
+        for product in products:
+            products_found = True
+            product_data = product.to_dict()
+            product_name = product_data.get('name', 'No Name')
+            product_price = product_data.get('price', 'N/A')
+            product_image_url = product_data.get('image_url', '')
+            product_discount = product_data.get('offer', '0')
+
+            # Create a card for each product
+            item_box = MDCard(
+                orientation='vertical',
+                spacing=dp(9),
+                size_hint=(None, None),
+                size=(dp(170), dp(220)),  # Slightly increased width and height
+                elevation=4,  # Maintain card effect
+                padding=dp(8),
+                md_bg_color=(1, 1, 1, 1),  # White background for card
+            )
+
+            product_image = FitImage(
+                source=product_image_url,
+                size_hint=(1, None),  # Image takes full width of the card
+                height=dp(70),  # Slightly increased image height
+                pos_hint={"center_x": 0.5},
+                radius=[dp(10)] * 4,
+                keep_ratio=True,  # Maintain aspect ratio
+                allow_stretch=True  # Allow stretching to fit the size
+            )
+
+            product_name_label = MDLabel(
+                text=product_name,
+                halign='center',
+                theme_text_color='Primary',
+                bold=True,
+                font_style='Body1',
+                size_hint_y=None,
+                height=dp(35),  # Slightly increased height for text
+                text_size=(dp(140), None),  # Allow wrapping within the card
+                shorten=True,
+                max_lines=2,  # Limit to two lines
+            )
+
+            product_price_label = MDLabel(
+                text=f"{product_price} JOD",
+                halign='center',
+                theme_text_color='Secondary'
+            )
+
+            discount_label_text = f"{product_discount}% off" if product_discount else ""
+            discount_label = MDLabel(
+                text=discount_label_text,
+                halign='center',
+                size_hint_y=None,
+                height=dp(20),  # Slightly increased height for label
+                theme_text_color='Error'
+            )
+
+            # Add the widgets to the card
+            item_box.add_widget(product_image)
+            item_box.add_widget(product_name_label)
+            item_box.add_widget(product_price_label)
+            item_box.add_widget(discount_label)
+            product_box.add_widget(item_box)
+
+        
+        if not products_found:
+            print(f"No products found for brand: {brand_name}")
+
+
     def load_products(self):
         self.category_name = None
         self.current_page = 0
@@ -2183,6 +2237,7 @@ class WindowManager(ScreenManager):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.history_stack = []
+        self.cart_items = []  # Initialize an empty list to hold cart items
 
     def add_to_history(self, screen_name):
         if self.current not in self.history_stack:
@@ -2203,17 +2258,9 @@ class SearchScreen(Screen):
         print(f"Text changed: {text}")  # Debug statement
         app.search_products(text)
 
-
-
 class MyMainApp(MDApp):
-
-    cart_items = ListProperty([])
-
-    def add_to_cart(self, product):
-        self.cart_items.append(product)
-
+    
     def build(self):
-
         self.scanner = BarcodeScanner()
         self.previous_screen = None
         self.window_manager = WindowManager()
@@ -2235,6 +2282,90 @@ class MyMainApp(MDApp):
             self.root.current = "login"
         
         return self.root
+
+    cart_items = ListProperty([])
+
+
+    def on_start(self):
+        # Schedule populate_brands to run after the UI has been initialized
+        Clock.schedule_once(self.populate_brands, 0.1)
+
+    def populate_brands(self, *args):
+        app_screen = self.root.get_screen('app_screen')
+        if app_screen is None:
+            print("App screen not found!")
+            return
+        
+        brand_box = app_screen.ids.get('brand_box')
+        if brand_box is None:
+            print("brand_box not found in AppScreen.")
+            return
+
+        brand_box.clear_widgets()
+        print("brand_box cleared.")
+
+        products_ref = db.collection('products')
+        try:
+            products = products_ref.stream()
+            print("Firestore query executed.")
+        except Exception as e:
+            print(f"Error retrieving products: {e}")
+            return
+
+        brands_set = set()
+        for product in products:
+            product_data = product.to_dict()
+            brand_name = product_data.get('brand')
+            if brand_name:
+                brands_set.add(brand_name)
+        
+        brands_list = list(brands_set)
+        print(f"Unique brands found: {brands_list}")
+
+        if not brands_list:
+            print("No brands found in Firestore.")
+            return
+
+        for brand_name in brands_list:
+            card = MDCard(
+                size_hint=(None, None),
+                size=(dp(150), dp(150)),
+                elevation=10,
+                radius=[dp(10), dp(10), dp(10), dp(10)],
+                on_release=self.create_card_click_callback(brand_name)
+            )
+
+            card_label = MDLabel(
+                text=brand_name,
+                halign="center",
+                valign="center"
+            )
+
+            card.add_widget(card_label)
+            brand_box.add_widget(card)
+
+    def create_card_click_callback(self, brand_name):
+        def callback(instance):
+            print(f"Brand card clicked: {brand_name}")
+            product_screen = self.root.get_screen('product_screen')
+            if product_screen:
+                product_screen.display_brand_products(brand_name)
+            else:
+                print("Product screen not found!")
+            self.root.current = 'product_screen'  # Navigate to ProductScreen
+        return callback
+
+
+    '''def on_card_click(self, brand_name):
+        self.selected_brand = brand_name
+        print(f"Brand selected: {brand_name}")
+        self.go_to_screen("product_screen")
+        self.root.get_screen("product_screen").display_brand_products(brand_name)'''
+
+    def add_to_cart(self, product):
+        self.cart_items.append(product)
+
+    
     def start_camera(self):
         self.scanner.start_camera()
     def logout(self):
@@ -2308,22 +2439,22 @@ class MyMainApp(MDApp):
 
         # Update the product list with the filtered results
         self.update_product_list(products)
-
+    
     def update_product_list(self, products):
-        print("update_product_list has been called")
         search_screen = self.root.get_screen('search_screen')
         product_list = search_screen.ids.product_list
 
         product_list.clear_widgets()
 
         for product in products:
+            # Create a new product_card that references the current product data
             card = MDCard(
                 orientation='vertical',
                 size_hint=(1, None),
                 height=dp(100),
                 padding=dp(10),
                 spacing=dp(10),
-                pos_hint={"center_x": 0.5},
+                pos_hint={"center_x": 0.5}
             )
 
             card_layout = BoxLayout(orientation='horizontal', spacing=dp(10))
@@ -2339,10 +2470,10 @@ class MyMainApp(MDApp):
                     keep_ratio=True
                 )
             except Exception as e:
-                print(f"Failed to load image: {e}")
                 fallback_image_url = 'https://via.placeholder.com/80'
                 product_image = KivyImage(
                     source=fallback_image_url,
+                    radius=[dp(10)] * 4,
                     size_hint=(None, None),
                     size=(image_size, image_size),
                     allow_stretch=True,
@@ -2368,11 +2499,11 @@ class MyMainApp(MDApp):
 
             card_layout.add_widget(text_layout)
             card.add_widget(card_layout)
+
+            # Correct lambda function to pass product data to show_product_details
+            card.bind(on_release=lambda instance, product=product: self.root.get_screen('product_details_screen').show_product_details(product))
+
             product_list.add_widget(card)
-
-
-
-        selected_category = StringProperty('')
 
     def on_card_click(self, category_name):
         self.selected_category = category_name

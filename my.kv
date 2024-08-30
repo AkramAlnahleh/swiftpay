@@ -529,40 +529,18 @@ WindowManager:
                                 size_hint_y: None
                                 height: self.texture_size[1]
                                 theme_text_color: "Secondary"
-
                             ScrollView:
                                 do_scroll_x: True
                                 do_scroll_y: False
                                 size_hint_y: None
                                 height: dp(150)
-
                                 MDBoxLayout:
+                                    id: brand_box
                                     orientation: 'horizontal'
                                     adaptive_size: True
                                     padding: [0, 0, 0, 0]
                                     spacing: dp(10)
 
-                                    MDCard:
-                                        size_hint: None, None
-                                        size: dp(150), dp(150)
-                                        elevation: 10
-                                        radius: [dp(10), dp(10), dp(10), dp(10)]
-                                        on_release: app.on_card_click("Brand 1")
-                                        MDLabel:
-                                            text: "Brand 1"
-                                            halign: "center"
-                                            valign: "center"
-
-                                    MDCard:
-                                        size_hint: None, None
-                                        size: dp(150), dp(150)
-                                        elevation: 10
-                                        radius: [dp(10), dp(10), dp(10), dp(10)]
-                                        on_release: app.on_card_click("Brand 2")
-                                        MDLabel:
-                                            text: "Brand 2"
-                                            halign: "center"
-                                            valign: "center"
 
         MDBoxLayout:
             orientation: 'horizontal'
@@ -752,6 +730,7 @@ WindowManager:
             id: card_number_input
             hint_text: "Card Number"
             input_filter: 'int'
+            max_text_length: 16
             
         MDTextField:
             id: expiry_date_input
@@ -761,6 +740,7 @@ WindowManager:
             id: cvv_input
             hint_text: "CVV"
             input_filter: 'int'
+            max_text_length: 3
             
         MDRaisedButton:
             text: "Save Card"
@@ -831,7 +811,7 @@ WindowManager:
 
                 MDIconButton:
                     icon: "arrow-left"
-                    on_release: app.back_button()
+                    on_release: app.root.current = 'app_screen'
                     size_hint_x: None
                     width: dp(56)
                     pos_hint: {"center_y": 0.5}  
@@ -1282,8 +1262,6 @@ WindowManager:
                     size_hint_y: None
                     height: self.minimum_height
                     id: order_items_container
-
-
 
 <CartItem>:
     orientation: 'horizontal'
